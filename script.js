@@ -3801,16 +3801,16 @@ eventEditForm.addEventListener("submit", async event => {
       }
     }
 
-    // Invite selected existing users.
-    const { error: inviteByIdError } = await supabaseClient.rpc(
-      "invite_event_members_by_id",
-      {
-        p_event_id: savedEvent.id,
-        p_user_ids: inviteeIds
-      }
-    );
+// Invite selected existing users.
+const { error: inviteByIdError } = await supabaseClient.rpc(
+  "invite_event_members_by_id",
+  {
+    p_event_id: savedEvent.id,
+    p_user_ids: inviteeIds
+  }
+);
 
-    if (inviteByIdError) throw inviteByIdError;
+if (inviteByIdError) throw inviteByIdError;
 
     // Invite only people who weren't already event members.
     // The server function uses ON CONFLICT DO NOTHING, preserving
