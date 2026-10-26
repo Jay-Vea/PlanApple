@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlanApple — Good Events, Better Together</title>
+  <meta name="description" content="Discover events, make plans, and bring people together with PlanApple.">
+
+  <!-- Fonts, icons, and app styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <!-- Sign-in and account creation -->
+  <section class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <p class="auth-eyebrow">ALOHA, FRIEND!</p>
+      <h1 class="auth-logo">PlanApple<span>.</span></h1>
+      <p class="auth-tagline">Good events, better together.</p>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="signInTab">Sign In</button>
+        <button type="button" class="auth-tab" id="signUpTab">Create Account</button>
+      </div>
+
+      <form id="authForm">
+        <div class="auth-field" id="displayNameField" hidden>
+          <label for="authDisplayName">Your name</label>
+          <input type="text" id="authDisplayName" placeholder="What should we call you?" autocomplete="name">
+        </div>
+
+        <div class="auth-field">
+          <label for="authEmail">Email address</label>
+          <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" placeholder="Enter your password" autocomplete="current-password" minlength="6" required>
+        </div>
+
+        <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+        <button class="auth-submit" id="authSubmit" type="submit">Sign In</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Main app shell -->
+  <div class="app">
+    <img
+      class="background-image"
+      src="https://www.publicdomainpictures.net/pictures/420000/velka/jungle-leaves-tropical-backdrop.jpg"
+      alt=""
+      aria-hidden="true"
+    >
+
+    <!-- Header and global actions -->
+    <section class="Header_class" id="Header">
+      <header class="app-header">
+        <a href="#" class="logo" aria-label="PlanApple home">PlanApple</a>
+
+        <div class="header-actions">
+          <button class="icon-button" type="button" aria-label="Open notifications">
+            <i class="fa-regular fa-bell" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button" type="button" aria-label="Open profile">
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+    </section>
+
+    <!-- Discover events -->
+    <section class="Main_class" id="Main">
+      <main class="main-content">
+        <section class="welcome-text">
+          <h1>Discover events around you</h1>
+          <p>Aloha!</p>
+        </section>
+
+        <section class="event-carousel" aria-label="Discover events">
+          <div class="carousel" id="eventCarousel"></div>
+
+          <div class="empty-state" id="emptyState" hidden>
+            <div class="empty-state-icon">
+              <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+            </div>
+            <h2>You have no events currently!</h2>
+            <p>Mahalo!</p>
+          </div>
+        </section>
+
+        <!-- Event decisions -->
+        <section class="decision-buttons" aria-label="Event decisions">
+          <button class="decision-button no-button" type="button" aria-label="Not attending">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+          <button class="decision-button add-event" type="button" id="Add_btn" aria-label="Add an event">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          </button>
+          <button class="decision-button yes-button" type="button" aria-label="Attending">
+            <i class="fa-solid fa-heart" aria-hidden="true"></i>
+          </button>
+
+        </section>
+      </main>
+
+      <!-- Events swipe instructions -->
+      <div class="event-swipe-help">
+        <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+        <span>
+          <strong>How to use PlanApple</strong>
+          Swipe left to pass, right to attend, and up or down to browse events.
+        </span>
+      </div>
+    </section>
+
+    <!-- Notifications -->
+
+    <div class="notification-overlay" id="notificationOverlay">
+      <div class="notification-backdrop" id="notificationBackdrop"></div>
+
+      <section
+        class="Notif_class"
+        id="Notif"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notificationTitle"
+      >
+        <header class="notification-header">
+          <h2 id="notificationTitle">Notifications</h2>
+          <button class="notification-close" id="closeNotifications" type="button" aria-label="Close notifications">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <button id="clearNotifications" class="clear-notifications-btn" type="button">
+          Clear Notifications
+        </button>
+<div id="notificationList" class="notification-list"></div>
+      </section>
+    </div>
+
+    <!-- Create event modal -->
+    <div class="add-event-overlay" id="addEventOverlay" aria-hidden="true">
+      <div class="add-event-backdrop" id="addEventBackdrop"></div>
+
+      <section
+        class="add-event-modal"
+        id="addEventModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="addEventTitle"
+      >
+        <header class="add-event-header">
+          <div>
+            <p class="add-event-eyebrow">PLAN SOMETHING GREAT</p>
+            <h2 id="addEventTitle">Create an Event</h2>
+            <p class="add-event-description">Bring your people together.</p>
+          </div>
+
+          <button class="add-event-close" id="closeAddEvent" type="button" aria-label="Close add event">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <form id="addEventForm">
+          <div class="add-event-field">
+            <label for="newEventName">Event name</label>
+            <input type="text" id="newEventName" name="eventName" placeholder="e.g. Beach day" required>
+          </div>
+
+          <div class="add-event-field">
+            <label for="newEventDate">Date</label>
+            <input type="date" id="newEventDate" name="eventDate" required>
+          </div>
+
+          <div class="add-event-field">
+            <label for="newEventTime">Time</label>
+            <input type="time" id="newEventTime" name="eventTime" required>
+          </div>
+
+          <div class="add-event-field">
+            <label for="newEventPlace">Place</label>
+            <input type="text" id="newEventPlace" name="eventPlace" placeholder="Where are we meeting?" required>
+          </div>
+
+<div class="add-event-field">
+  <label for="newEventInviteDropdown">Invite friends and groups</label>
+
+  <details class="event-invite-dropdown" id="newEventInviteDropdown">
+    <summary id="newEventInviteSummary">
+      Choose friends or groups
+    </summary>
+
+    <div class="event-invite-options" id="newEventInviteOptions">
+      <p class="event-invite-empty">
+        Your friends and groups will appear here.
+      </p>
+    </div>
+  </details>
+
+  <p class="add-event-hint">
+    Select multiple friends or groups. Choosing a group will include its members.
+  </p>
+</div>
+
+          <div class="add-event-actions">
+            <button class="add-event-cancel" id="cancelAddEvent" type="button">Cancel</button>
+            <button class="add-event-submit" type="submit">Create Event</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <!-- Profile and appearance settings -->
+    <section class="Profile_class" id="Profile">
+      <div class="profile-page">
+        <div class="profile-avatar" aria-hidden="true">
+          <i class="fa-solid fa-user"></i>
+        </div>
+
+        <p class="profile-eyebrow">YOUR PLANAPPLE ACCOUNT</p>
+        <h2 id="profileDisplayName">Loading profile...</h2>
+        <p id="profileEmail" class="profile-email"></p>
+
+        <div class="theme-control">
+          <span class="theme-label">Appearance</span>
+          <p class="theme-description">Choose how PlanApple looks.</p>
+          <button type="button" id="themeToggle" class="theme-toggle" aria-pressed="false">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            <span>Enable Dark Mode</span>
+          </button>
+        </div>
+
+        <div class="profile-info-card">
+          <p class="profile-info-label">Display Name</p>
+          <p id="profileNameDetail">Loading...</p>
+          <div class="profile-divider"></div>
+          <p class="profile-info-label">Email Address</p>
+          <p id="profileEmailDetail">Loading...</p>
+        </div>
+
+        <p id="profileStatus" class="profile-status" role="status"></p>
+
+        <button id="editProfileButton" class="profile-edit-button" type="button">
+          <i class="fa-solid fa-pen" aria-hidden="true"></i>
+          Edit Profile
+        </button>
+
+        <form id="editProfileForm" class="edit-profile-form" hidden>
+          <div class="profile-edit-field">
+            <label for="editDisplayName">Display Name</label>
+            <input type="text" id="editDisplayName" maxlength="40" placeholder="Enter your display name" required>
+          </div>
+
+          <p id="editProfileStatus" role="status" aria-live="polite"></p>
+
+          <div class="profile-edit-actions">
+            <button id="cancelProfileEdit" type="button" class="profile-cancel-button">Cancel</button>
+            <button id="saveProfileButton" type="submit" class="profile-save-button">Save Changes</button>
+          </div>
+        </form>
+
+        <button id="signOutButton" class="profile-signout" type="button">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+          Sign Out
+        </button>
+      </div>
+    </section>
+
+    <!-- Saved events calendar -->
+    <section class="Saved_class" id="Saved">
+      <div class="calendar-container">
+        <header class="calendar-heading">
+          <h2>My Calendar</h2>
+          <p>Your plans, all in one place.</p>
+        </header>
+
+        <div class="calendar-month-bar">
+          <button id="calendarPrev" type="button" aria-label="Previous month">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <h3 id="calendarMonthLabel">Loading...</h3>
+          <button id="calendarNext" type="button" aria-label="Next month">
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="calendar-weekdays">
+          <span>Sun</span><span>Mon</span><span>Tue</span>
+          <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+
+        <div id="calendarDays" class="calendar-days"></div>
+
+        <div class="calendar-legend">
+          <span><i class="calendar-dot accepted"></i> Accepted</span>
+          <span><i class="calendar-dot declined"></i> Declined</span>
+        </div>
+
+        <section id="calendarDayPanel" class="calendar-day-panel" hidden>
+          <div class="calendar-day-panel-heading">
+            <h3 id="calendarSelectedDate">Events</h3>
+            <button id="calendarCloseDay" type="button" aria-label="Close events">&times;</button>
+          </div>
+          <div id="calendarEventList"></div>
+        </section>
+      </div>
+      
+<!-- Edit events created by the current user -->
+<section class="owned-event-editor" id="ownedEventEditor">
+  <details class="owned-event-dropdown" id="ownedEventDropdown">
+    <summary>Edit your events</summary>
+
+    <p class="owned-event-description">
+      Choose an event you've created to update its details.
+    </p>
+
+    <div
+      class="owned-event-list"
+      id="ownedEventsList"
+      aria-live="polite"
+    >
+      <p class="owned-event-empty">Loading your events...</p>
+    </div>
+  </details>
+</section>
+</section>
+
+<!-- Edit event modal -->
+<div class="event-edit-overlay" id="eventEditOverlay" hidden>
+  <div class="event-edit-backdrop" id="eventEditBackdrop"></div>
+
+  <section
+    class="event-edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eventEditTitle"
+  >
+    <header class="event-edit-header">
+      <div>
+        <p class="event-edit-eyebrow">YOUR EVENT, YOUR PLAN</p>
+        <h2 id="eventEditTitle">Edit Event</h2>
+      </div>
+
+      <button
+        type="button"
+        class="event-edit-close"
+        id="closeEventEditor"
+        aria-label="Close event editor"
+      >&times;</button>
+    </header>
+
+    <form id="eventEditForm">
+      <div class="event-edit-field">
+        <label for="editEventName">Event name</label>
+        <input id="editEventName" type="text" maxlength="100" required>
+      </div>
+
+      <div class="event-edit-field">
+        <label for="editEventDate">Date</label>
+        <input id="editEventDate" type="date" required>
+      </div>
+
+      <div class="event-edit-field">
+        <label for="editEventTime">Time</label>
+        <input id="editEventTime" type="time" required>
+      </div>
+
+      <div class="event-edit-field">
+        <label for="editEventPlace">Location</label>
+        <input id="editEventPlace" type="text" maxlength="200" required>
+      </div>
+
+
+<div class="event-edit-field">
+  <label for="editEventInviteDropdown">
+    Invite friends and groups
+  </label>
+
+  <details class="event-invite-dropdown" id="editEventInviteDropdown">
+    <summary id="editEventInviteSummary">
+      Choose friends or groups
+    </summary>
+
+    <div
+      class="event-invite-options"
+      id="editEventInviteOptions"
+    >
+      <p>Select an event to load your friends and groups.</p>
+    </div>
+  </details>
+
+  <p class="event-invite-hint">
+    Select multiple friends or groups. Choosing a group will include its members.
+  </p>
+</div>
+
+
+      <p
+        class="event-edit-status"
+        id="eventEditStatus"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+
+
+<div class="event-edit-actions">
+  <button type="button" id="deleteEventButton">
+    Delete Event
+  </button>
+
+  <button type="button" id="cancelEventEdit">Cancel</button>
+
+  <button type="submit" id="saveEventEdit">Save Changes</button>
+</div>
+
+
+    </form>
+  </section>
+</div>
+
+
+    <!-- Friends, requests, search, and working groups -->
+    <section class="Friends_class" id="Friends">
+      <div class="friends-container">
+    
+        <!-- Page heading -->
+        <header class="friends-heading">
+          <h2>Friends</h2>
+          <p>Your people, all in one place.</p>
+        </header>
+    
+        <!-- Search for people -->
+        <form id="friendSearchForm" class="friends-search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    
+          <input
+            id="friendSearchInput"
+            type="search"
+            placeholder="Search people..."
+            minlength="2"
+            autocomplete="off"
+            aria-label="Search by username or display name"
+          >
+    
+          <button type="submit">Search</button>
+        </form>
+    
+        <div
+          id="friendSearchResults"
+          class="friends-results"
+          aria-live="polite"
+        ></div>
+    
+        <p
+          id="friendsMessage"
+          class="friends-message"
+          role="status"
+        ></p>
+    
+        <!-- Friend requests -->
+        <section class="friends-section">
+          <h3>Friend requests</h3>
+    
+          <div class="friends-table-wrap requests-table-wrap">
+            <table class="friends-table">
+              <thead>
+                <tr>
+                  <th>Person</th>
+                  <th>Request</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+    
+              <tbody id="friendRequestsBody">
+                <tr>
+                  <td colspan="3">Loading requests...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+    
+        <!-- Existing friends -->
+        <section class="friends-section">
+          <h3>
+            My friends
+            <span id="friendsCount">0</span>
+          </h3>
+    
+          <div class="friends-table-wrap existing-friends-wrap">
+            <table class="friends-table">
+              <thead>
+                <tr>
+                  <th>Friend</th>
+                  <th>Email</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+    
+              <tbody id="existingFriendsBody">
+                <tr>
+                  <td colspan="3">Loading friends...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+    
+        <!-- Working Groups -->
+        <section class="friends-section working-groups" id="workingGroups">
+        
+          <!-- Burgundy heading with search and create -->
+          <div class="working-groups-title">
+            <h3>Working Groups</h3>
+        
+            <div class="working-groups-controls">
+              <form id="groupSearchForm" class="group-search-form">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        
+                <input
+                  id="groupSearchInput"
+                  type="search"
+                  placeholder="Search groups..."
+                  aria-label="Search working groups"
+                  autocomplete="off"
+                >
+              </form>
+        
+              <button
+                type="button"
+                id="createGroupButton"
+                class="group-create-button"
+                aria-expanded="false"
+                aria-controls="createGroupForm"
+              >
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Create Group
+              </button>
+            </div>
+          </div>
+        
+          <!-- Create group form -->
+          <form id="createGroupForm" class="group-create-form" hidden>
+            <input
+              id="groupNameInput"
+              type="text"
+              placeholder="Enter group name..."
+              maxlength="40"
+              autocomplete="off"
+              aria-label="New group name"
+              required
+            >
+        
+            <button type="submit" class="group-action-button">
+              Create
+            </button>
+        
+            <button
+              type="button"
+              id="cancelGroupButton"
+              class="group-action-button"
+            >
+              Cancel
+            </button>
+          </form>
+        
+          <p
+            id="groupsMessage"
+            class="friends-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+        
+          <!-- Scrollable groups table -->
+          <div class="friends-table-wrap working-groups-table-wrap">
+            <table class="friends-table">
+              <thead>
+                <tr>
+                  <th>Group Name</th>
+                  <th>Members</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+        
+              <tbody id="groupList">
+                <tr>
+                  <td colspan="3">No working groups yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        
+        </section>
+        
+      </div>
+    </section>
+
+
+    <!-- Reserved add-events screen -->
+    <section class="Add_class" id="Add">
+      <p>Add</p>
+    </section>
+
+    <!-- Main app navigation -->
+    <nav class="bottom-nav" aria-label="Main navigation" id="Nav">
+      <button class="nav-item active" id="Event_btn" type="button">
+        <i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i>
+        <span>Events</span>
+      </button>
+      <button class="nav-item" id="Saved_btn" type="button">
+        <i class="fa-solid fa-fish" aria-hidden="true"></i>
+        <span>Saved</span>
+      </button>
+      <button class="nav-item" id="Friends_btn" type="button">
+        <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+        <span>Friends</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- App behavior -->
+  <script src="script.js"></script>
+</body>
+</html>
