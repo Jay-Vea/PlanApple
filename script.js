@@ -1193,14 +1193,22 @@ addEventForm.addEventListener("submit", async (event) => {
 
 if (insertError) throw insertError;
 
-// Add the event creator as a member.
+
+ // Add the event creator as a member.
 const { error: ownerMembershipError } = await supabaseClient
   .from("event_members")
-  .insert({
-    event_id: savedEvent.id,
-    user_id: user.id,
-    status: "going"
-  });
+  .upsert(
+    {
+      event_id: savedEvent.id,
+      user_id: user.id,
+      status: "going"
+    },
+    {
+      onConflict: "event_id,user_id",
+      ignoreDuplicates: true
+    }
+  );
+
 
 if (ownerMembershipError) {
   console.error(
