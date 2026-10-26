@@ -3715,6 +3715,7 @@ eventEditForm.addEventListener("submit", async event => {
       !desiredInviteeIds.has(String(member.user_id))
     );
 
+
     // Find new invitees; preserve existing statuses and read flags.
     const existingUserIds = new Set(
       existingMembers.map(member => String(member.user_id))
@@ -3801,17 +3802,19 @@ eventEditForm.addEventListener("submit", async event => {
       }
     }
 
-// Invite selected existing users.
-const { error: inviteByIdError } = await supabaseClient.rpc(
-  "invite_event_members_by_id",
-  {
-    p_event_id: savedEvent.id,
-    p_user_ids: inviteeIds
-  }
-);
+// Invite selected registered friends by their user IDs.
+if (newInviteeIds.size > 0) {
+  const { error: inviteByIdError } = await supabaseClient.rpc(
+    "invite_event_members_by_id",
+    {
+      p_event_id: savedEvent.id,
+      p_user_ids: [...newInviteeIds]
+    }
+  );
 
-if (inviteByIdError) throw inviteByIdError;
-
+  if (inviteByIdError) throw inviteByIdError;
+}
+    
     // Invite only people who weren't already event members.
     // The server function uses ON CONFLICT DO NOTHING, preserving
     // existing membership statuses.
