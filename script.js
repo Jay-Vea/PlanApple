@@ -3818,17 +3818,7 @@ if (newInviteeIds.size > 0) {
     // Invite only people who weren't already event members.
     // The server function uses ON CONFLICT DO NOTHING, preserving
     // existing membership statuses.
-    if (inviteEmails.length > 0) {
-      const { error: inviteError } = await supabaseClient.rpc(
-        "invite_event_members_by_email",
-        {
-          p_event_id: savedEvent.id,
-          p_emails: inviteEmails
-        }
-      );
 
-      if (inviteError) throw inviteError;
-    }
 
     // Update the local event list.
     const updatedDate = new Date(savedEvent.starts_at);
